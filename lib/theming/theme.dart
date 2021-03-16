@@ -6,6 +6,10 @@ ThemeData mainTheme = ThemeData.dark().copyWith(
   primaryColor: mainColor,
   primaryColorLight: mainColor,
   accentColor: mainColor,
+  checkboxTheme: CheckboxThemeData(
+    checkColor: MaterialStateProperty.all(white),
+    overlayColor: MaterialStateProperty.all(white),
+  ),
   timePickerTheme: TimePickerThemeData(
     backgroundColor: mainBackgroundColor,
   ),

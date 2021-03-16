@@ -9,6 +9,7 @@ import 'package:wantsbro/providers/auth_provider.dart';
 import 'package:wantsbro/providers/cart_provider.dart';
 import 'package:wantsbro/providers/category_provider.dart';
 import 'package:wantsbro/providers/fav_provider.dart';
+import 'package:wantsbro/providers/order_provider.dart';
 import 'package:wantsbro/providers/product_provider.dart';
 import 'package:wantsbro/providers/tabBar_nav_provider.dart';
 import 'package:wantsbro/providers/user_provider.dart';
@@ -106,6 +107,9 @@ class _MainAppState extends State<MainApp> {
         ),
         ChangeNotifierProvider<FavProvider>(
           create: (_) => FavProvider(),
+        ),
+        ChangeNotifierProvider<OrderProvider>(
+          create: (_) => OrderProvider(),
         ),
       ],
       child: MaterialApp(

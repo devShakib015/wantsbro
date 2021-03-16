@@ -5,6 +5,7 @@ import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
+import 'package:wantsbro/custom_widgets/Order%20System/choose_address.dart';
 import 'package:wantsbro/custom_widgets/Product%20Details/product_details.dart';
 import 'package:wantsbro/providers/cart_provider.dart';
 import 'package:wantsbro/providers/product_provider.dart';
@@ -64,119 +65,22 @@ class CartPage extends StatelessWidget {
                       child: CircularProgressIndicator(),
                     );
                   } else {
-                    final dataList = snapshot.data.docs;
-                    if (dataList.isNotEmpty) {
-                      double cartTotal = 0;
-                      for (var i = 0; i < dataList.length; i++) {
-                        cartTotal += dataList[i].data()["totalPrice"];
+                    final _cartDataList = snapshot.data.docs;
+                    if (_cartDataList.isNotEmpty) {
+                      double _cartTotal = 0;
+                      for (var i = 0; i < _cartDataList.length; i++) {
+                        _cartTotal += _cartDataList[i].data()["totalPrice"];
                       }
                       return Column(
                         children: [
-                          Expanded(
-                            child: ListView.builder(
-                                itemCount: dataList.length,
-                                itemBuilder: (context, index) {
-                                  final item = dataList[index];
-                                  int count = item.data()["count"];
-                                  return Dismissible(
-                                    key: Key(item.id),
-                                    onDismissed: (direction) async {
-                                      await Provider.of<CartProvider>(context,
-                                              listen: false)
-                                          .deleteItemFromCart(context, item.id);
-                                    },
-                                    background: Container(
-                                      child: Center(
-                                        child: Text("Delete Item From Cart"),
-                                      ),
-                                    ),
-                                    child: Card(
-                                        child: FutureBuilder<DocumentSnapshot>(
-                                      future:
-                                          Provider.of<ProductProvider>(context)
-                                              .getProductById(
-                                                  item.data()["productID"]),
-                                      builder: (BuildContext context,
-                                          AsyncSnapshot<DocumentSnapshot>
-                                              snapshot) {
-                                        if (!snapshot.hasData) {
-                                          return Center(
-                                              child: Text("Loading..."));
-                                        } else if (snapshot.hasError) {
-                                          return Text("There is an error");
-                                        } else {
-                                          final productData =
-                                              snapshot.data.data();
-
-                                          return GestureDetector(
-                                            onTap: () {
-                                              Navigator.push(
-                                                context,
-                                                MaterialPageRoute(
-                                                  builder: (context) =>
-                                                      ProductDetails(
-                                                    product: productData,
-                                                    productID: item
-                                                        .data()["productID"],
-                                                  ),
-                                                ),
-                                              );
-                                            },
-                                            child: Padding(
-                                              padding:
-                                                  const EdgeInsets.all(8.0),
-                                              child: ListTile(
-                                                leading: ClipRRect(
-                                                  borderRadius:
-                                                      BorderRadius.circular(10),
-                                                  child: Container(
-                                                    width: 60,
-                                                    height: 60,
-                                                    child: Image.network(
-                                                      item.data()["isSingle"]
-                                                          ? productData[
-                                                                  "featuredImages"]
-                                                              [0]
-                                                          : productData[
-                                                                  "productVariation"][item
-                                                                      .data()[
-                                                                  "variationIndex"]]
-                                                              [
-                                                              "variationImageUrl"],
-                                                      fit: BoxFit.cover,
-                                                    ),
-                                                  ),
-                                                ),
-                                                title: Text(
-                                                  item.data()["isSingle"]
-                                                      ? productData["title"]
-                                                      : "${productData["title"]} (${getAttributes(productData["productVariation"][item.data()["variationIndex"]])})",
-                                                  style: TextStyle(
-                                                    fontSize: 14,
-                                                    fontWeight: FontWeight.bold,
-                                                  ),
-                                                ),
-                                                subtitle: _cartitemCount(count,
-                                                    context, item, productData),
-                                                trailing: Text(item
-                                                    .data()["totalPrice"]
-                                                    .toString()),
-                                              ),
-                                            ),
-                                          );
-                                        }
-                                      },
-                                    )),
-                                  );
-                                }),
-                          ),
+                          _cartListView(_cartDataList),
                           Container(
                             width: double.infinity,
                             color: mainColor,
                             height: 50,
                             child: Center(
                               child: Text(
-                                "Cart Total: $cartTotal",
+                                "Cart Total: $_cartTotal",
                                 style: TextStyle(
                                   fontSize: 20,
                                   fontWeight: FontWeight.bold,
@@ -185,7 +89,20 @@ class CartPage extends StatelessWidget {
                             ),
                           ),
                           MaterialButton(
-                            onPressed: () {},
+                            onPressed: () {
+                              List _cartItems = [];
+                              for (var i = 0; i < _cartDataList.length; i++) {
+                                _cartItems.add(_cartDataList[i].data());
+                              }
+                              Navigator.push(
+                                context,
+                                MaterialPageRoute(
+                                  builder: (context) => ChooseAddress(
+                                      totalCartPrice: _cartTotal,
+                                      cartItems: _cartItems),
+                                ),
+                              );
+                            },
                             child: Container(
                               width: double.infinity,
                               height: 30,
@@ -224,6 +141,96 @@ class CartPage extends StatelessWidget {
             ),
           ),
         ],
+      ),
+    );
+  }
+
+  Expanded _cartListView(List<QueryDocumentSnapshot> dataList) {
+    return Expanded(
+      child: ListView.builder(
+          itemCount: dataList.length,
+          itemBuilder: (context, index) {
+            final item = dataList[index];
+            int count = item.data()["count"];
+            return Dismissible(
+              key: Key(item.id),
+              onDismissed: (direction) async {
+                await Provider.of<CartProvider>(context, listen: false)
+                    .deleteItemFromCart(context, item.id);
+              },
+              background: Container(
+                child: Center(
+                  child: Text("Delete Item From Cart"),
+                ),
+              ),
+              child: Card(
+                  child: FutureBuilder<DocumentSnapshot>(
+                future: Provider.of<ProductProvider>(context)
+                    .getProductById(item.data()["productID"]),
+                builder: (BuildContext context,
+                    AsyncSnapshot<DocumentSnapshot> snapshot) {
+                  if (!snapshot.hasData) {
+                    return Center(child: Text("Loading..."));
+                  } else if (snapshot.hasError) {
+                    return Text("There is an error");
+                  } else {
+                    final productData = snapshot.data.data();
+
+                    return _singleProductCardCart(
+                        context, productData, item, count);
+                  }
+                },
+              )),
+            );
+          }),
+    );
+  }
+
+  GestureDetector _singleProductCardCart(BuildContext context,
+      Map<String, dynamic> productData, QueryDocumentSnapshot item, int count) {
+    final String _productTitle = item.data()["isSingle"]
+        ? productData["title"]
+        : "${productData["title"]} (${getAttributes(productData["productVariation"][item.data()["variationIndex"]])})";
+
+    return GestureDetector(
+      onTap: () {
+        Navigator.push(
+          context,
+          MaterialPageRoute(
+            builder: (context) => ProductDetails(
+              product: productData,
+              productID: item.data()["productID"],
+            ),
+          ),
+        );
+      },
+      child: Padding(
+        padding: const EdgeInsets.all(8.0),
+        child: ListTile(
+          leading: ClipRRect(
+            borderRadius: BorderRadius.circular(10),
+            child: Container(
+              width: 60,
+              height: 60,
+              child: Image.network(
+                item.data()["isSingle"]
+                    ? productData["featuredImages"][0]
+                    : productData["productVariation"]
+                        [item.data()["variationIndex"]]["variationImageUrl"],
+                fit: BoxFit.cover,
+              ),
+            ),
+          ),
+          title: Text(
+            _productTitle,
+            style: TextStyle(
+              fontSize: 14,
+              fontWeight: FontWeight.bold,
+            ),
+          ),
+          subtitle: _cartitemCount(count, context, item, productData),
+          trailing: Text(item.data()["totalPrice"].toString()),
+        ),
       ),
     );
   }

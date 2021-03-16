@@ -35,6 +35,19 @@ class CartProvider extends ChangeNotifier {
     notifyListeners();
   }
 
+  Future<void> clearCart(BuildContext context) async {
+    await FirebaseFirestore.instance
+        .collection("users")
+        .doc(Provider.of<AuthProvider>(context, listen: false).currentUser.uid)
+        .collection("cart")
+        .get()
+        .then((value) => {
+              for (DocumentSnapshot ds in value.docs) {ds.reference.delete()}
+            });
+
+    notifyListeners();
+  }
+
   Stream<QuerySnapshot> getCartItems(BuildContext context) {
     return FirebaseFirestore.instance
         .collection("users")

@@ -6,6 +6,7 @@ import 'package:wantsbro/Other%20Pages/something_went_wrong.dart';
 import 'package:wantsbro/custom_widgets/custom_tappable_card_widget.dart';
 import 'package:wantsbro/pages/Tab Bar Pages/dashboardPages/profile.dart';
 import 'package:wantsbro/pages/Tab%20Bar%20Pages/dashboardPages/addresses.dart';
+import 'package:wantsbro/pages/Tab%20Bar%20Pages/dashboardPages/orders.dart';
 import 'package:wantsbro/providers/auth_provider.dart';
 import 'package:wantsbro/providers/user_provider.dart';
 
@@ -17,6 +18,16 @@ class Dashboard extends StatelessWidget {
       context,
       MaterialPageRoute(
         builder: (context) => Profile(),
+        fullscreenDialog: true,
+      ),
+    );
+  }
+
+  void _goToOrders(BuildContext context) {
+    Navigator.push(
+      context,
+      MaterialPageRoute(
+        builder: (context) => Orders(),
         fullscreenDialog: true,
       ),
     );
@@ -138,7 +149,7 @@ class Dashboard extends StatelessWidget {
           CustomTappableCard(
             icon: Icons.subject,
             label: "Orders",
-            onTap: () {},
+            onTap: () => _goToOrders(context),
           ),
           CustomTappableCard(
             icon: Icons.location_on,
