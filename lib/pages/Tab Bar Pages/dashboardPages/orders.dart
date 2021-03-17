@@ -2,6 +2,7 @@ import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
+import 'package:wantsbro/pages/Tab%20Bar%20Pages/dashboardPages/view_order.dart';
 import 'package:wantsbro/providers/auth_provider.dart';
 import 'package:wantsbro/providers/order_provider.dart';
 import 'package:wantsbro/theming/color_constants.dart';
@@ -39,27 +40,38 @@ class Orders extends StatelessWidget {
                     shrinkWrap: true,
                     itemBuilder: (context, index) {
                       final _value = _dataList[index].data();
-                      //final _valueID = dataList[index].id;
+                      final _valueID = _dataList[index].id;
 
                       DateTime _time = _value["orderTime"].toDate();
 
-                      return Card(
-                        color: _value["orderStatus"] == "Awaiting Acceptance"
-                            ? Colors.blueGrey
-                            : (_value["orderStatus"] == "Processing"
-                                ? Colors.lightBlue
-                                : (_value["orderStatus"] == "Cancelled"
-                                    ? mainColor
-                                    : Colors.teal)),
-                        child: ListTile(
-                          leading: Text("${index + 1}."),
-                          title: Text(_value["orderId"]),
-                          trailing: Text(_value["totalCartPrice"].toString()),
-                          subtitle: Text(
-                            "${_time.year}-${_time.month}-${_time.day}  ${_time.hour}:${_time.minute}:${_time.second}\nStatus: ${_value["orderStatus"]}",
-                            style: TextStyle(
-                              fontSize: 14,
-                              fontWeight: FontWeight.bold,
+                      return GestureDetector(
+                        onTap: () {
+                          Navigator.push(
+                            context,
+                            MaterialPageRoute(
+                              builder: (context) => ViewOrder(
+                                  orderId: _valueID, orderDetails: _value),
+                            ),
+                          );
+                        },
+                        child: Card(
+                          color: _value["orderStatus"] == "Awaiting Acceptance"
+                              ? Colors.blueGrey
+                              : (_value["orderStatus"] == "Processing"
+                                  ? Colors.lightBlue
+                                  : (_value["orderStatus"] == "Cancelled"
+                                      ? mainColor
+                                      : Colors.teal)),
+                          child: ListTile(
+                            leading: Text("${index + 1}."),
+                            title: Text(_value["orderId"]),
+                            trailing: Text(_value["totalCartPrice"].toString()),
+                            subtitle: Text(
+                              "${_time.year}-${_time.month}-${_time.day}  ${_time.hour}:${_time.minute}:${_time.second}\nStatus: ${_value["orderStatus"]}",
+                              style: TextStyle(
+                                fontSize: 14,
+                                fontWeight: FontWeight.bold,
+                              ),
                             ),
                           ),
                         ),

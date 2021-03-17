@@ -14,6 +14,13 @@ class OrderProvider extends ChangeNotifier {
         .catchError((e) {});
   }
 
+  Future<void> cancelOrder(String orderId) async {
+    await _orderCollection
+        .doc(orderId)
+        .update({"orderStatus": "Cancelled"}).catchError((e) {});
+    notifyListeners();
+  }
+
   Stream<QuerySnapshot> getAddresses(User user) {
     return _orderCollection.where("userId", isEqualTo: user.uid).snapshots();
   }
