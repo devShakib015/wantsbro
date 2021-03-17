@@ -20,4 +20,38 @@ class ProductProvider extends ChangeNotifier {
         .where("parentCategoryID", isEqualTo: categoryId)
         .snapshots();
   }
+
+  Future<List<int>> getSingleProductStockAndSold(String productId) async {
+    int stock;
+    int sold;
+    await _productCollection.doc(productId).get().then((value) {
+      stock = value.data()["stockCount"];
+      sold = value.data()["soldCount"];
+    });
+    return [stock, sold];
+  }
+
+  Future<List> getMultipleProductVariation(String productId) async {
+    List v = [];
+    await _productCollection.doc(productId).get().then((value) {
+      v = value.data()["productVariation"];
+    });
+    return v;
+  }
+
+  Future<void> updateSingleProductStockAndSold(
+      String productId, int newStockCount, int newSoldCount) async {
+    await _productCollection
+        .doc(productId)
+        .update({"stockCount": newStockCount, "soldCount": newSoldCount});
+    notifyListeners();
+  }
+
+  Future<void> updateMultipleProductStockAndSold(
+      String productId, List productVariation) async {
+    await _productCollection
+        .doc(productId)
+        .update({"productVariation": productVariation});
+    notifyListeners();
+  }
 }

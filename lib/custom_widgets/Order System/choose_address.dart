@@ -7,6 +7,7 @@ import 'package:wantsbro/providers/address_provider.dart';
 import 'package:wantsbro/providers/auth_provider.dart';
 import 'package:wantsbro/providers/cart_provider.dart';
 import 'package:wantsbro/providers/order_provider.dart';
+import 'package:wantsbro/providers/product_provider.dart';
 import 'package:wantsbro/theming/color_constants.dart';
 
 class ChooseAddress extends StatefulWidget {
@@ -24,6 +25,34 @@ class ChooseAddress extends StatefulWidget {
 class _ChooseAddressState extends State<ChooseAddress> {
   Map _selectedAddress = {};
 
+  Future<void> updateStock(List cartItems) async {
+    for (var i = 0; i < cartItems.length; i++) {
+      if (cartItems[i]["isSingle"]) {
+        List<int> stockAndSold =
+            await Provider.of<ProductProvider>(context, listen: false)
+                .getSingleProductStockAndSold(cartItems[i]["productID"]);
+
+        await Provider.of<ProductProvider>(context, listen: false)
+            .updateSingleProductStockAndSold(
+                cartItems[i]["productID"],
+                stockAndSold[0] - cartItems[i]["count"],
+                stockAndSold[1] + cartItems[i]["count"]);
+      } else {
+        List productVariation =
+            await Provider.of<ProductProvider>(context, listen: false)
+                .getMultipleProductVariation(cartItems[i]["productID"]);
+        productVariation[cartItems[i]["variationIndex"]]["stockCount"] -=
+            cartItems[i]["count"];
+        productVariation[cartItems[i]["variationIndex"]]["soldCount"] +=
+            cartItems[i]["count"];
+
+        await Provider.of<ProductProvider>(context, listen: false)
+            .updateMultipleProductStockAndSold(
+                cartItems[i]["productID"], productVariation);
+      }
+    }
+  }
+
   void _confirmPayment() async {
     String _orderId = "WB${DateTime.now().millisecondsSinceEpoch}";
     await Provider.of<OrderProvider>(context, listen: false).addNewOrder(
@@ -38,6 +67,9 @@ class _ChooseAddressState extends State<ChooseAddress> {
             cartItems: widget.cartItems,
             totalCartPrice: widget.totalCartPrice),
         _orderId);
+
+    await updateStock(widget.cartItems);
+
     await Provider.of<CartProvider>(context, listen: false).clearCart(context);
 
     await showDialog(

@@ -3,7 +3,6 @@ import 'package:provider/provider.dart';
 import 'package:wantsbro/custom_widgets/show_dialog.dart';
 import 'package:wantsbro/providers/auth_provider.dart';
 import 'package:wantsbro/theming/color_constants.dart';
-import 'package:modal_progress_hud/modal_progress_hud.dart';
 
 class SignInPage extends StatefulWidget {
   @override
@@ -17,28 +16,28 @@ class _SignInPageState extends State<SignInPage> {
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(),
-      body: ModalProgressHUD(
-        inAsyncCall: _showSpinner,
-        opacity: 0,
-        child: Center(
-          child: Column(
-            mainAxisAlignment: MainAxisAlignment.center,
-            children: [
-              Text(
-                "You must sign in \nto view this page",
-                textAlign: TextAlign.center,
-                style: TextStyle(
-                  fontSize: 26,
-                ),
+      body: _showSpinner
+          ? Center(
+              child: CircularProgressIndicator(),
+            )
+          : Center(
+              child: Column(
+                mainAxisAlignment: MainAxisAlignment.center,
+                children: [
+                  Text(
+                    "You must sign in \nto view this page",
+                    textAlign: TextAlign.center,
+                    style: TextStyle(
+                      fontSize: 26,
+                    ),
+                  ),
+                  SizedBox(
+                    height: 20,
+                  ),
+                  googleSignInButton(context),
+                ],
               ),
-              SizedBox(
-                height: 20,
-              ),
-              googleSignInButton(context),
-            ],
-          ),
-        ),
-      ),
+            ),
     );
   }
 

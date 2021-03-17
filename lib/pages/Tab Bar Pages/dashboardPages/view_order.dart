@@ -20,6 +20,34 @@ class ViewOrder extends StatefulWidget {
 }
 
 class _ViewOrderState extends State<ViewOrder> {
+  Future<void> updateStock(List cartItems) async {
+    for (var i = 0; i < cartItems.length; i++) {
+      if (cartItems[i]["isSingle"]) {
+        List<int> stockAndSold =
+            await Provider.of<ProductProvider>(context, listen: false)
+                .getSingleProductStockAndSold(cartItems[i]["productID"]);
+
+        await Provider.of<ProductProvider>(context, listen: false)
+            .updateSingleProductStockAndSold(
+                cartItems[i]["productID"],
+                stockAndSold[0] + cartItems[i]["count"],
+                stockAndSold[1] - cartItems[i]["count"]);
+      } else {
+        List productVariation =
+            await Provider.of<ProductProvider>(context, listen: false)
+                .getMultipleProductVariation(cartItems[i]["productID"]);
+        productVariation[cartItems[i]["variationIndex"]]["stockCount"] +=
+            cartItems[i]["count"];
+        productVariation[cartItems[i]["variationIndex"]]["soldCount"] -=
+            cartItems[i]["count"];
+
+        await Provider.of<ProductProvider>(context, listen: false)
+            .updateMultipleProductStockAndSold(
+                cartItems[i]["productID"], productVariation);
+      }
+    }
+  }
+
   @override
   Widget build(BuildContext context) {
     DateTime _time = widget.orderDetails["orderTime"].toDate();
@@ -72,11 +100,40 @@ class _ViewOrderState extends State<ViewOrder> {
                               child: Text(
                                   "The order is packed and ready to ship."))
                           : ElevatedButton(
-                              onPressed: () async {
-                                await Provider.of<OrderProvider>(context,
-                                        listen: false)
-                                    .cancelOrder(widget.orderId);
-                                Navigator.pop(context);
+                              onPressed: () {
+                                showDialog(
+                                  context: context,
+                                  barrierDismissible: false,
+                                  builder: (BuildContext context) {
+                                    return AlertDialog(
+                                      title: Text('Cancelling Confirmation!'),
+                                      content: Text(
+                                          "Are You Sure Want To Cancel the order?"),
+                                      actions: <Widget>[
+                                        ElevatedButton(
+                                          child: Text("Yes"),
+                                          onPressed: () async {
+                                            await Provider.of<OrderProvider>(
+                                                    context,
+                                                    listen: false)
+                                                .cancelOrder(widget.orderId);
+
+                                            await updateStock(cartItems);
+
+                                            Navigator.pop(context);
+                                            Navigator.pop(context);
+                                          },
+                                        ),
+                                        ElevatedButton(
+                                          child: Text("Cancel"),
+                                          onPressed: () {
+                                            Navigator.of(context).pop();
+                                          },
+                                        ),
+                                      ],
+                                    );
+                                  },
+                                );
                               },
                               child: Text("Cancel Order")),
               Container(
