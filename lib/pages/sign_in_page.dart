@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
+import 'package:wantsbro/Other%20Pages/loading.dart';
 import 'package:wantsbro/custom_widgets/show_dialog.dart';
 import 'package:wantsbro/providers/auth_provider.dart';
 import 'package:wantsbro/theming/color_constants.dart';
@@ -18,7 +19,7 @@ class _SignInPageState extends State<SignInPage> {
       appBar: AppBar(),
       body: _showSpinner
           ? Center(
-              child: CircularProgressIndicator(),
+              child: Loading(),
             )
           : Center(
               child: Column(

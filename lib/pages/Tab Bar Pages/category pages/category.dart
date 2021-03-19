@@ -2,6 +2,7 @@ import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
+import 'package:wantsbro/Other%20Pages/loading.dart';
 import 'package:wantsbro/pages/Tab%20Bar%20Pages/category%20pages/product_with_category.dart';
 import 'package:wantsbro/providers/category_provider.dart';
 
@@ -20,7 +21,7 @@ class Category extends StatelessWidget {
           } else {
             if (!snapshot.hasData) {
               return Center(
-                child: CircularProgressIndicator(),
+                child: Loading(),
               );
             } else {
               final dataList = snapshot.data.docs;

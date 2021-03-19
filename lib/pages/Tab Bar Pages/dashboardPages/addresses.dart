@@ -2,6 +2,7 @@ import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
+import 'package:wantsbro/Other%20Pages/loading.dart';
 import 'package:wantsbro/custom_widgets/address_card.dart';
 import 'package:wantsbro/pages/Tab%20Bar%20Pages/dashboardPages/address_edit.dart';
 import 'package:wantsbro/providers/address_provider.dart';
@@ -45,7 +46,7 @@ class AddressesPage extends StatelessWidget {
             } else {
               if (!snapshot.hasData) {
                 return Center(
-                  child: CircularProgressIndicator(),
+                  child: Loading(),
                 );
               } else {
                 final dataList = snapshot.data.docs;

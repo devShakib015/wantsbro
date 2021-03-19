@@ -2,6 +2,7 @@ import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
+import 'package:wantsbro/Other%20Pages/loading.dart';
 import 'package:wantsbro/Other%20Pages/something_went_wrong.dart';
 import 'package:wantsbro/custom_widgets/edit_phone.dart';
 import 'package:wantsbro/providers/auth_provider.dart';
@@ -181,7 +182,7 @@ class Profile extends StatelessWidget {
         builder:
             (BuildContext context, AsyncSnapshot<DocumentSnapshot> snapshot) {
           if (snapshot.connectionState != ConnectionState.done) {
-            return Center(child: CircularProgressIndicator());
+            return Loading();
           } else if (snapshot.hasError) {
             return SomethingWentWrong();
           } else {

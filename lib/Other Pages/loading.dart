@@ -8,8 +8,12 @@ class Loading extends StatelessWidget {
       theme: mainTheme,
       debugShowCheckedModeBanner: false,
       home: Scaffold(
+        backgroundColor: Colors.black,
         body: Center(
-          child: CircularProgressIndicator(),
+          child: Container(
+            width: 100,
+            child: Image.asset('assets/images/load.gif'),
+          ),
         ),
       ),
     );

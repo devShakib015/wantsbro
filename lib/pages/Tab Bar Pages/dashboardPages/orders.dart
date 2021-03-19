@@ -31,13 +31,13 @@ class Orders extends StatelessWidget {
                   child: CircularProgressIndicator(),
                 );
               } else {
-                var _dataList = snapshot.data.docs;
+                var ol = snapshot.data.docs;
+
+                var _dataList = List.from(ol.reversed);
 
                 if (_dataList.isNotEmpty) {
                   return ListView.builder(
                     itemCount: _dataList.length,
-                    reverse: true,
-                    shrinkWrap: true,
                     itemBuilder: (context, index) {
                       final _value = _dataList[index].data();
                       final _valueID = _dataList[index].id;
@@ -63,7 +63,7 @@ class Orders extends StatelessWidget {
                                       ? mainColor
                                       : Colors.teal)),
                           child: ListTile(
-                            leading: Text("${index + 1}."),
+                            leading: Text("${_dataList.length - index}."),
                             title: Text(_value["orderId"]),
                             trailing: Text(_value["totalCartPrice"].toString()),
                             subtitle: Text(

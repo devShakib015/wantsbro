@@ -1,6 +1,7 @@
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
+import 'package:wantsbro/Other%20Pages/loading.dart';
 import 'package:wantsbro/custom_widgets/address_card.dart';
 import 'package:wantsbro/providers/order_provider.dart';
 import 'package:wantsbro/providers/product_provider.dart';
@@ -20,6 +21,7 @@ class ViewOrder extends StatefulWidget {
 }
 
 class _ViewOrderState extends State<ViewOrder> {
+  bool _isloading = false;
   Future<void> updateStock(List cartItems) async {
     for (var i = 0; i < cartItems.length; i++) {
       if (cartItems[i]["isSingle"]) {
@@ -48,6 +50,34 @@ class _ViewOrderState extends State<ViewOrder> {
     }
   }
 
+  void _cancelOrder(List cartItems) async {
+    {
+      Navigator.pop(context);
+      setState(() {
+        _isloading = true;
+      });
+      await Provider.of<OrderProvider>(context, listen: false)
+          .cancelOrder(widget.orderId);
+
+      await updateStock(cartItems);
+
+      setState(() {
+        _isloading = false;
+      });
+
+      await showDialog(
+        context: context,
+        builder: (context) => Dialog(
+          child: Container(
+              width: MediaQuery.of(context).size.width * 0.6,
+              height: MediaQuery.of(context).size.width * 0.6,
+              child: Center(child: Text("Order is Cancelled Succesfully!"))),
+        ),
+      );
+      Navigator.pop(context);
+    }
+  }
+
   @override
   Widget build(BuildContext context) {
     DateTime _time = widget.orderDetails["orderTime"].toDate();
@@ -59,133 +89,134 @@ class _ViewOrderState extends State<ViewOrder> {
             : (widget.orderDetails["orderStatus"] == "Cancelled"
                 ? mainColor
                 : Colors.teal));
-    return Scaffold(
-      appBar: AppBar(
-        backgroundColor: bgColor,
-        title: Text(widget.orderId),
-      ),
-      body: Container(
-        padding: EdgeInsets.all(8),
-        child: SingleChildScrollView(
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.stretch,
-            children: [
-              Card(
-                color: bgColor,
-                child: Padding(
-                  padding: const EdgeInsets.all(8.0),
-                  child: Text(
-                    "${_time.year}-${_time.month}-${_time.day}  ${_time.hour}:${_time.minute}:${_time.second}\nStatus: ${widget.orderDetails["orderStatus"]}",
-                    textAlign: TextAlign.center,
-                    style: TextStyle(
-                      fontSize: 14,
-                      fontWeight: FontWeight.bold,
+    return _isloading
+        ? Loading()
+        : Scaffold(
+            appBar: AppBar(
+              backgroundColor: bgColor,
+              title: Text(widget.orderId),
+            ),
+            body: Container(
+              padding: EdgeInsets.all(8),
+              child: SingleChildScrollView(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.stretch,
+                  children: [
+                    Card(
+                      color: bgColor,
+                      child: Padding(
+                        padding: const EdgeInsets.all(8.0),
+                        child: Text(
+                          "${_time.year}-${_time.month}-${_time.day}  ${_time.hour}:${_time.minute}:${_time.second}\nStatus: ${widget.orderDetails["orderStatus"]}",
+                          textAlign: TextAlign.center,
+                          style: TextStyle(
+                            fontSize: 14,
+                            fontWeight: FontWeight.bold,
+                          ),
+                        ),
+                      ),
                     ),
-                  ),
+                    widget.orderDetails["orderStatus"] == "Completed"
+                        ? ElevatedButton(
+                            style: ButtonStyle(
+                                backgroundColor:
+                                    MaterialStateProperty.all(Colors.teal)),
+                            onPressed: () {},
+                            child: Text("Review Now"))
+                        : widget.orderDetails["orderStatus"] == "Cancelled"
+                            ? ElevatedButton(
+                                onPressed: null,
+                                child: Text("Already Cancelled"))
+                            : widget.orderDetails["orderStatus"] == "Processing"
+                                ? ElevatedButton(
+                                    onPressed: null,
+                                    child: Text(
+                                        "The order is packed and ready to ship."))
+                                : ElevatedButton(
+                                    onPressed: () {
+                                      {
+                                        showDialog(
+                                          context: context,
+                                          barrierDismissible: false,
+                                          builder: (BuildContext context) {
+                                            return AlertDialog(
+                                              title: Text(
+                                                  'Cancelling Confirmation!'),
+                                              content: Text(
+                                                  "Are You Sure Want To Cancel the order?"),
+                                              actions: <Widget>[
+                                                ElevatedButton(
+                                                  child: Text("Yes"),
+                                                  onPressed: () {
+                                                    _cancelOrder(cartItems);
+                                                  },
+                                                ),
+                                                ElevatedButton(
+                                                  child: Text("Cancel"),
+                                                  onPressed: () {
+                                                    Navigator.of(context).pop();
+                                                  },
+                                                ),
+                                              ],
+                                            );
+                                          },
+                                        );
+                                      }
+                                    },
+                                    child: Text("Cancel Order")),
+                    Container(
+                        padding: EdgeInsets.all(16),
+                        width: double.infinity,
+                        child: Text(
+                          "Total Price: ${widget.orderDetails["totalCartPrice"]}",
+                          textAlign: TextAlign.center,
+                          style: TextStyle(
+                            fontSize: 24,
+                            fontWeight: FontWeight.bold,
+                          ),
+                        )),
+                    Column(children: [
+                      for (var i = 0; i < cartItems.length; i++)
+                        Card(
+                            child: FutureBuilder<DocumentSnapshot>(
+                          future: Provider.of<ProductProvider>(context)
+                              .getProductById(cartItems[i]["productID"]),
+                          builder: (BuildContext context,
+                              AsyncSnapshot<DocumentSnapshot> snapshot) {
+                            if (!snapshot.hasData) {
+                              return Center(child: Text("Loading..."));
+                            } else if (snapshot.hasError) {
+                              return Text("There is an error");
+                            } else {
+                              final productData = snapshot.data.data();
+
+                              //return Text(cartItems.toString());
+
+                              return _singleProductCardCart(
+                                  context, productData, cartItems[i]);
+                            }
+                          },
+                        ))
+                    ]),
+                    addressCard(
+                        addressType: widget.orderDetails["shippingAddress"]
+                            ["addressType"],
+                        opacity: 0.0,
+                        name: widget.orderDetails["shippingAddress"]["name"],
+                        address: widget.orderDetails["shippingAddress"]
+                            ["address"],
+                        area: widget.orderDetails["shippingAddress"]["area"],
+                        district: widget.orderDetails["shippingAddress"]
+                            ["district"],
+                        phone: widget.orderDetails["shippingAddress"]["phone"],
+                        postCode: widget.orderDetails["shippingAddress"]
+                            ["postCode"],
+                        onPressed: null),
+                  ],
                 ),
               ),
-              widget.orderDetails["orderStatus"] == "Completed"
-                  ? ElevatedButton(
-                      style: ButtonStyle(
-                          backgroundColor:
-                              MaterialStateProperty.all(Colors.teal)),
-                      onPressed: () {},
-                      child: Text("Review Now"))
-                  : widget.orderDetails["orderStatus"] == "Cancelled"
-                      ? ElevatedButton(
-                          onPressed: null, child: Text("Already Cancelled"))
-                      : widget.orderDetails["orderStatus"] == "Processing"
-                          ? ElevatedButton(
-                              onPressed: null,
-                              child: Text(
-                                  "The order is packed and ready to ship."))
-                          : ElevatedButton(
-                              onPressed: () {
-                                showDialog(
-                                  context: context,
-                                  barrierDismissible: false,
-                                  builder: (BuildContext context) {
-                                    return AlertDialog(
-                                      title: Text('Cancelling Confirmation!'),
-                                      content: Text(
-                                          "Are You Sure Want To Cancel the order?"),
-                                      actions: <Widget>[
-                                        ElevatedButton(
-                                          child: Text("Yes"),
-                                          onPressed: () async {
-                                            await Provider.of<OrderProvider>(
-                                                    context,
-                                                    listen: false)
-                                                .cancelOrder(widget.orderId);
-
-                                            await updateStock(cartItems);
-
-                                            Navigator.pop(context);
-                                            Navigator.pop(context);
-                                          },
-                                        ),
-                                        ElevatedButton(
-                                          child: Text("Cancel"),
-                                          onPressed: () {
-                                            Navigator.of(context).pop();
-                                          },
-                                        ),
-                                      ],
-                                    );
-                                  },
-                                );
-                              },
-                              child: Text("Cancel Order")),
-              Container(
-                  padding: EdgeInsets.all(16),
-                  width: double.infinity,
-                  child: Text(
-                    "Total Price: ${widget.orderDetails["totalCartPrice"]}",
-                    textAlign: TextAlign.center,
-                    style: TextStyle(
-                      fontSize: 24,
-                      fontWeight: FontWeight.bold,
-                    ),
-                  )),
-              Column(children: [
-                for (var i = 0; i < cartItems.length; i++)
-                  Card(
-                      child: FutureBuilder<DocumentSnapshot>(
-                    future: Provider.of<ProductProvider>(context)
-                        .getProductById(cartItems[i]["productID"]),
-                    builder: (BuildContext context,
-                        AsyncSnapshot<DocumentSnapshot> snapshot) {
-                      if (!snapshot.hasData) {
-                        return Center(child: Text("Loading..."));
-                      } else if (snapshot.hasError) {
-                        return Text("There is an error");
-                      } else {
-                        final productData = snapshot.data.data();
-
-                        //return Text(cartItems.toString());
-
-                        return _singleProductCardCart(
-                            context, productData, cartItems[i]);
-                      }
-                    },
-                  ))
-              ]),
-              addressCard(
-                  addressType: widget.orderDetails["shippingAddress"]
-                      ["addressType"],
-                  opacity: 0.0,
-                  name: widget.orderDetails["shippingAddress"]["name"],
-                  address: widget.orderDetails["shippingAddress"]["address"],
-                  area: widget.orderDetails["shippingAddress"]["area"],
-                  district: widget.orderDetails["shippingAddress"]["district"],
-                  phone: widget.orderDetails["shippingAddress"]["phone"],
-                  postCode: widget.orderDetails["shippingAddress"]["postCode"],
-                  onPressed: null),
-            ],
-          ),
-        ),
-      ),
-    );
+            ),
+          );
   }
 
   Widget _singleProductCardCart(BuildContext context,

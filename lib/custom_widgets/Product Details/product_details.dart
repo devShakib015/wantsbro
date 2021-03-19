@@ -584,7 +584,7 @@ class _ProductDetailsState extends State<ProductDetails> {
           padding: EdgeInsets.only(right: 10),
           height: double.infinity,
           width: MediaQuery.of(context).size.width * 0.3,
-          color: Colors.amber,
+          color: disableWhite,
           child: Align(
             alignment: Alignment.center,
             child: Container(

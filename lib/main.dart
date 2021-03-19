@@ -113,11 +113,10 @@ class _MainAppState extends State<MainApp> {
         ),
       ],
       child: MaterialApp(
-        title: 'wantsBro',
-        debugShowCheckedModeBanner: false,
-        theme: mainTheme,
-        home: App(),
-      ),
+          title: 'wantsBro',
+          debugShowCheckedModeBanner: false,
+          theme: mainTheme,
+          home: App()),
     );
   }
 

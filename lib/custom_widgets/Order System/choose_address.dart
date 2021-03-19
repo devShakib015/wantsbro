@@ -2,6 +2,7 @@ import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
+import 'package:wantsbro/Other%20Pages/loading.dart';
 import 'package:wantsbro/models/order_model.dart';
 import 'package:wantsbro/providers/address_provider.dart';
 import 'package:wantsbro/providers/auth_provider.dart';
@@ -24,6 +25,7 @@ class ChooseAddress extends StatefulWidget {
 
 class _ChooseAddressState extends State<ChooseAddress> {
   Map _selectedAddress = {};
+  bool _isLoading = false;
 
   Future<void> updateStock(List cartItems) async {
     for (var i = 0; i < cartItems.length; i++) {
@@ -54,6 +56,10 @@ class _ChooseAddressState extends State<ChooseAddress> {
   }
 
   void _confirmPayment() async {
+    Navigator.pop(context);
+    setState(() {
+      _isLoading = true;
+    });
     String _orderId = "WB${DateTime.now().millisecondsSinceEpoch}";
     await Provider.of<OrderProvider>(context, listen: false).addNewOrder(
         OrderModel(
@@ -71,7 +77,9 @@ class _ChooseAddressState extends State<ChooseAddress> {
     await updateStock(widget.cartItems);
 
     await Provider.of<CartProvider>(context, listen: false).clearCart(context);
-
+    setState(() {
+      _isLoading = false;
+    });
     await showDialog(
       context: context,
       builder: (context) => Dialog(
@@ -85,154 +93,164 @@ class _ChooseAddressState extends State<ChooseAddress> {
     );
 
     Navigator.pop(context);
-    Navigator.pop(context);
   }
 
   @override
   Widget build(BuildContext context) {
     User _user = Provider.of<AuthProvider>(context).currentUser;
 
-    return Scaffold(
-      appBar: AppBar(
-        title: Text("Choose Shipping Address"),
-      ),
-      body: StreamBuilder<QuerySnapshot>(
-          stream: Provider.of<AddressProvider>(context).getAddresses(_user),
-          builder:
-              (BuildContext context, AsyncSnapshot<QuerySnapshot> snapshot) {
-            if (snapshot.hasError) {
-              return Container(
-                child: Center(
-                  child: Text("Error Fetching data"),
-                ),
-              );
-            } else {
-              if (!snapshot.hasData) {
-                return Center(
-                  child: CircularProgressIndicator(),
-                );
-              } else {
-                final dataList = snapshot.data.docs;
+    return _isLoading
+        ? Loading()
+        : Scaffold(
+            appBar: AppBar(
+              title: Text("Choose Shipping Address"),
+            ),
+            body: StreamBuilder<QuerySnapshot>(
+                stream:
+                    Provider.of<AddressProvider>(context).getAddresses(_user),
+                builder: (BuildContext context,
+                    AsyncSnapshot<QuerySnapshot> snapshot) {
+                  if (snapshot.hasError) {
+                    return Container(
+                      child: Center(
+                        child: Text("Error Fetching data"),
+                      ),
+                    );
+                  } else {
+                    if (!snapshot.hasData) {
+                      return Center(
+                        child: CircularProgressIndicator(),
+                      );
+                    } else {
+                      final dataList = snapshot.data.docs;
 
-                if (dataList.isNotEmpty) {
-                  return Column(
-                    crossAxisAlignment: CrossAxisAlignment.stretch,
-                    children: [
-                      Expanded(
-                        child: ListView.builder(
-                          itemCount: dataList.length,
-                          itemBuilder: (context, index) {
-                            final _value = dataList[index].data();
+                      if (dataList.isNotEmpty) {
+                        return Column(
+                          crossAxisAlignment: CrossAxisAlignment.stretch,
+                          children: [
+                            Expanded(
+                              child: ListView.builder(
+                                itemCount: dataList.length,
+                                itemBuilder: (context, index) {
+                                  final _value = dataList[index].data();
 
-                            return ListTile(
-                              title: Text(
-                                _value["addressType"],
-                                style: TextStyle(
-                                  fontSize: 20,
-                                  fontWeight: FontWeight.bold,
-                                ),
-                              ),
-                              subtitle:
-                                  Text("${_value["name"]}\n${_value["phone"]}"),
-                              leading: Checkbox(
-                                activeColor: white,
-                                fillColor: MaterialStateProperty.all(mainColor),
-                                value: _selectedAddress["addressType"] ==
-                                    _value["addressType"],
-                                onChanged: (bool isSelected) {
-                                  setState(() {
-                                    _selectedAddress = _value;
-                                  });
+                                  return ListTile(
+                                    title: Text(
+                                      _value["addressType"],
+                                      style: TextStyle(
+                                        fontSize: 20,
+                                        fontWeight: FontWeight.bold,
+                                      ),
+                                    ),
+                                    subtitle: Text(
+                                        "${_value["name"]}\n${_value["phone"]}"),
+                                    leading: Checkbox(
+                                      activeColor: white,
+                                      fillColor:
+                                          MaterialStateProperty.all(mainColor),
+                                      value: _selectedAddress["addressType"] ==
+                                          _value["addressType"],
+                                      onChanged: (bool isSelected) {
+                                        setState(() {
+                                          _selectedAddress = _value;
+                                        });
+                                      },
+                                    ),
+                                  );
                                 },
                               ),
-                            );
-                          },
-                        ),
-                      ),
-                      ElevatedButton(
-                        onPressed: () {
-                          if (_selectedAddress["addressType"] == null) {
-                            showDialog(
-                              context: context,
-                              builder: (context) => Dialog(
-                                child: Container(
-                                    width:
-                                        MediaQuery.of(context).size.width * 0.6,
-                                    height:
-                                        MediaQuery.of(context).size.width * 0.6,
-                                    child: Center(
-                                        child: Text(
-                                            "Select a shipping address first."))),
-                              ),
-                            );
-                          } else {
-                            showModalBottomSheet(
-                              context: context,
-                              builder: (context) => SingleChildScrollView(
-                                child: Container(
-                                  height:
-                                      MediaQuery.of(context).size.height * 0.5,
-                                  child: Column(
-                                    children: [
-                                      Center(
-                                        child: Icon(Icons.drag_handle),
+                            ),
+                            ElevatedButton(
+                              onPressed: () {
+                                if (_selectedAddress["addressType"] == null) {
+                                  showDialog(
+                                    context: context,
+                                    builder: (context) => Dialog(
+                                      child: Container(
+                                          width: MediaQuery.of(context)
+                                                  .size
+                                                  .width *
+                                              0.6,
+                                          height: MediaQuery.of(context)
+                                                  .size
+                                                  .width *
+                                              0.6,
+                                          child: Center(
+                                              child: Text(
+                                                  "Select a shipping address first."))),
+                                    ),
+                                  );
+                                } else {
+                                  showModalBottomSheet(
+                                    context: context,
+                                    builder: (context) => SingleChildScrollView(
+                                      child: Container(
+                                        height:
+                                            MediaQuery.of(context).size.height *
+                                                0.5,
+                                        child: Column(
+                                          children: [
+                                            Center(
+                                              child: Icon(Icons.drag_handle),
+                                            ),
+                                            SizedBox(
+                                              height: 10,
+                                            ),
+                                            PaymentMethod(
+                                              imagePath:
+                                                  "assets/images/bkash.png",
+                                              onPressed: _confirmPayment,
+                                            ),
+                                            SizedBox(
+                                              height: 10,
+                                            ),
+                                            PaymentMethod(
+                                              imagePath:
+                                                  "assets/images/nagad.png",
+                                              onPressed: _confirmPayment,
+                                            ),
+                                          ],
+                                        ),
                                       ),
-                                      SizedBox(
-                                        height: 10,
+                                    ),
+                                  );
+                                }
+                              },
+                              child: Center(
+                                child: Row(
+                                  mainAxisSize: MainAxisSize.min,
+                                  children: [
+                                    Text(
+                                      "Pay Now",
+                                      style: TextStyle(
+                                        fontSize: 20,
+                                        fontWeight: FontWeight.bold,
                                       ),
-                                      PaymentMethod(
-                                        imagePath: "assets/images/bkash.png",
-                                        onPressed: _confirmPayment,
-                                      ),
-                                      SizedBox(
-                                        height: 10,
-                                      ),
-                                      PaymentMethod(
-                                        imagePath: "assets/images/nagad.png",
-                                        onPressed: _confirmPayment,
-                                      ),
-                                    ],
-                                  ),
+                                    ),
+                                    SizedBox(
+                                      width: 10,
+                                    ),
+                                    Icon(Icons.arrow_right_alt),
+                                  ],
                                 ),
                               ),
-                            );
-                          }
-                        },
-                        child: Center(
-                          child: Row(
-                            mainAxisSize: MainAxisSize.min,
-                            children: [
-                              Text(
-                                "Pay Now",
-                                style: TextStyle(
-                                  fontSize: 20,
-                                  fontWeight: FontWeight.bold,
-                                ),
-                              ),
-                              SizedBox(
-                                width: 10,
-                              ),
-                              Icon(Icons.arrow_right_alt),
-                            ],
+                            )
+                          ],
+                        );
+                      } else {
+                        return Container(
+                          child: Center(
+                            child: Text(
+                              "No Addresses Available.\nAdd an address in your dashboard \nthen come back here to order. \n\nThank you!!!",
+                              textAlign: TextAlign.center,
+                            ),
                           ),
-                        ),
-                      )
-                    ],
-                  );
-                } else {
-                  return Container(
-                    child: Center(
-                      child: Text(
-                        "No Addresses Available.\nAdd an address in your dashboard \nthen come back here to order. \n\nThank you!!!",
-                        textAlign: TextAlign.center,
-                      ),
-                    ),
-                  );
-                }
-              }
-            }
-          }),
-    );
+                        );
+                      }
+                    }
+                  }
+                }),
+          );
   }
 }
 
