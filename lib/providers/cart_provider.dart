@@ -5,6 +5,8 @@ import 'package:wantsbro/models/cart_model.dart';
 import 'package:wantsbro/providers/auth_provider.dart';
 
 class CartProvider extends ChangeNotifier {
+  List<Map<String, dynamic>> _cartList = [];
+
   Future<void> addToCart(BuildContext context, CartModel cartModel) async {
     await FirebaseFirestore.instance
         .collection("users")
@@ -54,6 +56,31 @@ class CartProvider extends ChangeNotifier {
         .doc(Provider.of<AuthProvider>(context).currentUser.uid)
         .collection("cart")
         .snapshots();
+  }
+
+  Future<void> makeCartList(BuildContext context) async {
+    //_cartList.clear();
+    await FirebaseFirestore.instance
+        .collection("users")
+        .doc(Provider.of<AuthProvider>(context).currentUser.uid)
+        .collection("cart")
+        .snapshots()
+        .forEach((element) {
+      _cartList.clear();
+      final data = element.docs;
+      for (var i = 0; i < data.length; i++) {
+        _cartList.add({
+          "productId": data[i].data()["productID"],
+          "index": data[i].data()["variationIndex"]
+        });
+      }
+    });
+
+    print(_cartList);
+  }
+
+  List<Map<String, dynamic>> get getCartItemsAndIndex {
+    return _cartList;
   }
 
   double cartTotal(double total) {

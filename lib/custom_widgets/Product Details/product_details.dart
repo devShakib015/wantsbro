@@ -1,3 +1,5 @@
+import 'dart:math';
+
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
@@ -28,6 +30,13 @@ class _ProductDetailsState extends State<ProductDetails> {
 //! variables for cart
   int _selectedIndex = 0;
   int _count = 1;
+  int _initialStock;
+  //int _selectedStock = 0;
+
+  @override
+  void initState() {
+    super.initState();
+  }
 
 //! variables
   int _currentImage = 1;
@@ -35,7 +44,7 @@ class _ProductDetailsState extends State<ProductDetails> {
 //! Void Callbacks
 
 //! add to cart callbacks
-  void _addToCart() async {
+  void _addToCart(List<Map<String, dynamic>> cartList) async {
     if (FirebaseAuth.instance.currentUser == null) {
       showDialog(
         context: context,
@@ -48,35 +57,95 @@ class _ProductDetailsState extends State<ProductDetails> {
       );
     } else {
       if (widget.product["isSingle"]) {
-        await Provider.of<CartProvider>(context, listen: false).addToCart(
-            context,
-            CartModel(
-              count: _count,
-              isSingle: true,
-              productID: widget.productID,
-              totalPrice: (widget.product["salePrice"] == 0.0
-                  ? (widget.product["originalPrice"] * _count)
-                  : (widget.product["salePrice"] * _count)),
-            ));
+        if (_initialStock <= 0) {
+          showDialog(
+            context: context,
+            builder: (context) => Dialog(
+              child: Container(
+                  width: MediaQuery.of(context).size.width * 0.6,
+                  height: MediaQuery.of(context).size.width * 0.6,
+                  child: Center(child: Text("Out of stock. Sorry!"))),
+            ),
+          );
+        } else {
+          List pid = cartList.map((e) => e["productId"]).toList();
+
+          if (pid.contains(widget.productID)) {
+            showDialog(
+              context: context,
+              builder: (context) => Dialog(
+                child: Container(
+                    width: MediaQuery.of(context).size.width * 0.6,
+                    height: MediaQuery.of(context).size.width * 0.6,
+                    child: Center(
+                        child: Text(
+                      "This product is already added to the cart.\n Please check there.",
+                      textAlign: TextAlign.center,
+                    ))),
+              ),
+            );
+          } else {
+            await Provider.of<CartProvider>(context, listen: false).addToCart(
+                context,
+                CartModel(
+                  count: _count,
+                  isSingle: true,
+                  productID: widget.productID,
+                  totalPrice: (widget.product["salePrice"] == 0.0
+                      ? (widget.product["originalPrice"] * _count)
+                      : (widget.product["salePrice"] * _count)),
+                ));
+          }
+        }
       } else {
-        await Provider.of<CartProvider>(context, listen: false).addToCart(
-          context,
-          CartModel(
-            count: _count,
-            isSingle: false,
-            productID: widget.productID,
-            variationIndex: _selectedIndex,
-            totalPrice: (widget.product["productVariation"][_selectedIndex]
-                        ["salePrice"] ==
-                    0.0
-                ? (widget.product["productVariation"][_selectedIndex]
-                        ["originalPrice"] *
-                    _count)
-                : (widget.product["productVariation"][_selectedIndex]
-                        ["salePrice"] *
-                    _count)),
-          ),
-        );
+        if (_initialStock <= 0) {
+          showDialog(
+            context: context,
+            builder: (context) => Dialog(
+              child: Container(
+                  width: MediaQuery.of(context).size.width * 0.6,
+                  height: MediaQuery.of(context).size.width * 0.6,
+                  child: Center(child: Text("Out of stock. Sorry!"))),
+            ),
+          );
+        } else {
+          List pid =
+              cartList.map((e) => "${e["productId"]}-${e["index"]}").toList();
+          if (pid.contains("${widget.productID}-$_selectedIndex")) {
+            showDialog(
+              context: context,
+              builder: (context) => Dialog(
+                child: Container(
+                    width: MediaQuery.of(context).size.width * 0.6,
+                    height: MediaQuery.of(context).size.width * 0.6,
+                    child: Center(
+                        child: Text(
+                      "This product is already added to the cart.\n Please check there.",
+                      textAlign: TextAlign.center,
+                    ))),
+              ),
+            );
+          } else {
+            await Provider.of<CartProvider>(context, listen: false).addToCart(
+              context,
+              CartModel(
+                count: _count,
+                isSingle: false,
+                productID: widget.productID,
+                variationIndex: _selectedIndex,
+                totalPrice: (widget.product["productVariation"][_selectedIndex]
+                            ["salePrice"] ==
+                        0.0
+                    ? (widget.product["productVariation"][_selectedIndex]
+                            ["originalPrice"] *
+                        _count)
+                    : (widget.product["productVariation"][_selectedIndex]
+                            ["salePrice"] *
+                        _count)),
+              ),
+            );
+          }
+        }
       }
     }
   }
@@ -95,13 +164,27 @@ class _ProductDetailsState extends State<ProductDetails> {
 
   @override
   Widget build(BuildContext context) {
+    Provider.of<CartProvider>(context).makeCartList(context);
+    if (widget.product["isSingle"]) {
+      _initialStock = widget.product["stockCount"];
+    } else {
+      _initialStock =
+          widget.product["productVariation"][_selectedIndex]["stockCount"];
+    }
+    //print(_initialStock);
+    //print(Provider.of<CartProvider>(context).getCartItemsAndIndex);
+
+    List<Map<String, dynamic>> _cartList =
+        Provider.of<CartProvider>(context).getCartItemsAndIndex;
+
     final Map<String, dynamic> product = widget.product;
     int _numberOfFI = product["featuredImages"].length;
     final _pageController = PageController();
     return Scaffold(
       bottomNavigationBar: _productDetailsBottomAppBar(context),
       floatingActionButtonLocation: FloatingActionButtonLocation.endDocked,
-      floatingActionButton: _addToCartButton(),
+      floatingActionButton: _addToCartButton(_cartList),
+      floatingActionButtonAnimator: FloatingActionButtonAnimator.scaling,
       body: CustomScrollView(
         slivers: [
           _productFeaturedImagesSection(
@@ -261,8 +344,7 @@ class _ProductDetailsState extends State<ProductDetails> {
                     SizedBox(
                       height: 5,
                     ),
-                    Text(
-                        "In Stock: ${productVariation[_selectedIndex]["stockCount"]}"),
+                    Text("In Stock: $_initialStock"),
                     Text(
                         "Total Sold: ${productVariation[_selectedIndex]["soldCount"]}"),
                   ],
@@ -449,7 +531,7 @@ class _ProductDetailsState extends State<ProductDetails> {
           ),
           Text("Weight: ${product["weight"]}"),
           Text("Size: ${product["size"]}"),
-          Text("In Stock: ${product["stockCount"]}"),
+          Text("In Stock: $_initialStock"),
           Text("Total Sold: ${product["soldCount"]}"),
           SizedBox(
             height: 10,
@@ -496,10 +578,10 @@ class _ProductDetailsState extends State<ProductDetails> {
   }
 
 //! Add to cart Button
-  FloatingActionButton _addToCartButton() {
+  FloatingActionButton _addToCartButton(List<Map<String, dynamic>> cartList) {
     return FloatingActionButton(
       child: Icon(Icons.add_shopping_cart),
-      onPressed: _addToCart,
+      onPressed: () => _addToCart(cartList),
       tooltip: "Add to Cart",
     );
   }
@@ -507,6 +589,7 @@ class _ProductDetailsState extends State<ProductDetails> {
 //! Bottom App Bar
   BottomAppBar _productDetailsBottomAppBar(BuildContext context) {
     return BottomAppBar(
+      //color: Colors.transparent,
       child: Container(
         width: double.infinity,
         height: MediaQuery.of(context).size.height * 0.07,
