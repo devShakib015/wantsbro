@@ -5,6 +5,25 @@ class ProductProvider extends ChangeNotifier {
   CollectionReference _productCollection =
       FirebaseFirestore.instance.collection('products');
 
+  Future<List<Map<String, dynamic>>> getAllProducts() async {
+    List<Map<String, dynamic>> _pList = [];
+
+    await _productCollection.get().then((value) => {
+          for (var i = 0; i < value.docs.length; i++)
+            {
+              _pList.add({
+                "title": value.docs[i].data()["title"],
+                "category": value.docs[i].data()["childCategoryName"],
+                "imageUrl": value.docs[i].data()["featuredImages"][0],
+                "id": value.docs[i].id,
+                "product": value.docs[i].data(),
+              })
+            }
+        });
+
+    return _pList;
+  }
+
   Stream<QuerySnapshot> getProductsByCategory(String categoryId) {
     return _productCollection
         .where("childCategoryID", isEqualTo: categoryId)

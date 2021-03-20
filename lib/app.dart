@@ -9,7 +9,9 @@ import 'package:wantsbro/pages/Tab%20Bar%20Pages/favourites.dart';
 import 'package:wantsbro/pages/Tab%20Bar%20Pages/home.dart';
 import 'package:wantsbro/pages/cart_page.dart';
 import 'package:wantsbro/pages/landing_page.dart';
+import 'package:wantsbro/pages/search_page.dart';
 import 'package:wantsbro/providers/cart_provider.dart';
+import 'package:wantsbro/providers/product_provider.dart';
 import 'package:wantsbro/providers/tabBar_nav_provider.dart';
 import 'package:wantsbro/theming/color_constants.dart';
 
@@ -27,7 +29,10 @@ class App extends StatelessWidget {
     );
   }
 
-  void _searchProducts() {}
+  void _searchProducts(BuildContext context) {
+    showSearch(context: context, delegate: SearchProducts());
+  }
+
   void _contactUs() {}
   void _aboutUs() {}
   void _rateOurApp() {}
@@ -116,7 +121,7 @@ class App extends StatelessWidget {
 
   Widget appBar(BuildContext context) {
     return AppBar(
-      title: appBarSearchBar(),
+      title: appBarSearchBar(context),
       actions: [
         appBarCartButton(context),
       ],
@@ -161,14 +166,14 @@ class App extends StatelessWidget {
 
   //! Appbar Search bar
 
-  Widget appBarSearchBar() {
+  Widget appBarSearchBar(BuildContext context) {
     return MaterialButton(
       minWidth: double.maxFinite,
       padding: const EdgeInsets.symmetric(horizontal: 16),
       shape: StadiumBorder(
         side: BorderSide(width: 2, color: mainColor),
       ),
-      onPressed: _searchProducts,
+      onPressed: () => _searchProducts(context),
       child: Row(
         mainAxisAlignment: MainAxisAlignment.start,
         children: [
