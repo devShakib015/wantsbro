@@ -2,6 +2,7 @@ import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
+import 'package:wantsbro/Other%20Pages/loading.dart';
 import 'package:wantsbro/pages/Tab%20Bar%20Pages/dashboardPages/view_order.dart';
 import 'package:wantsbro/providers/auth_provider.dart';
 import 'package:wantsbro/providers/order_provider.dart';
@@ -27,9 +28,7 @@ class Orders extends StatelessWidget {
               );
             } else {
               if (!snapshot.hasData) {
-                return Center(
-                  child: CircularProgressIndicator(),
-                );
+                return Loading();
               } else {
                 var ol = snapshot.data.docs;
 

@@ -24,6 +24,10 @@ class ProductProvider extends ChangeNotifier {
     return _pList;
   }
 
+  Stream<QuerySnapshot> get allProducts {
+    return _productCollection.snapshots();
+  }
+
   Stream<QuerySnapshot> getProductsByCategory(String categoryId) {
     return _productCollection
         .where("childCategoryID", isEqualTo: categoryId)

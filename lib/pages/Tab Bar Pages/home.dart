@@ -1,13 +1,17 @@
+import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:flutter/cupertino.dart';
+import 'package:flutter/material.dart';
 import 'package:flutter_swiper/flutter_swiper.dart';
+import 'package:provider/provider.dart';
+import 'package:wantsbro/custom_widgets/product_grid_view.dart';
+import 'package:wantsbro/providers/product_provider.dart';
 import 'package:wantsbro/theming/color_constants.dart';
 
 class Home extends StatelessWidget {
   final List<String> images = [
-    "https://images.all-free-download.com/images/graphicthumb/small_green_tree_200348.jpg",
-    "https://images.all-free-download.com/images/graphiclarge/free_vector_summer_beach_image_48512.jpg",
-    "https://images.all-free-download.com/images/graphiclarge/free_vector_graphic_retro_background_147282.jpg",
-    "https://images.all-free-download.com/images/graphiclarge/red_world_card_free_vector_graphic_556967.jpg"
+    "https://firebasestorage.googleapis.com/v0/b/wantsbro-73b9b.appspot.com/o/Display%20Pictures%2Fhuman.jpg?alt=media&token=1e92635c-796e-436e-a08d-7fcea45a4d89",
+    "https://firebasestorage.googleapis.com/v0/b/wantsbro-73b9b.appspot.com/o/Display%20Pictures%2Fmeans.jpg?alt=media&token=aafd8cfb-8ace-41e9-971f-2ff45c572f87",
+    "https://firebasestorage.googleapis.com/v0/b/wantsbro-73b9b.appspot.com/o/Display%20Pictures%2FWelcome%20To%20wantsBro.jpg?alt=media&token=5985a5a7-c83d-42a3-a439-ce20bd2e9be8",
   ];
   @override
   Widget build(BuildContext context) {
@@ -36,6 +40,44 @@ class Home extends StatelessWidget {
                 },
               ),
             ),
+            Container(
+              child: StreamBuilder<QuerySnapshot>(
+                stream: Provider.of<ProductProvider>(context).allProducts,
+                builder: (BuildContext context,
+                    AsyncSnapshot<QuerySnapshot> snapshot) {
+                  if (snapshot.hasError) {
+                    return Container(
+                      child: Center(
+                        child: Text("Error Fetching data"),
+                      ),
+                    );
+                  } else {
+                    if (!snapshot.hasData) {
+                      return Center(
+                        child: Container(
+                          width: 100,
+                          child: Image.asset('assets/images/load.gif'),
+                        ),
+                      );
+                    } else {
+                      final productDataList = snapshot.data.docs;
+                      productDataList.shuffle();
+
+                      if (productDataList.isNotEmpty) {
+                        return ProductGridView(
+                            productDataList: productDataList);
+                      } else {
+                        return Container(
+                          child: Center(
+                            child: Text("No Products"),
+                          ),
+                        );
+                      }
+                    }
+                  }
+                },
+              ),
+            )
           ],
         ),
       ),

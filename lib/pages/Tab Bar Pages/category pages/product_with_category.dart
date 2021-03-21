@@ -1,6 +1,7 @@
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
+import 'package:wantsbro/Other%20Pages/loading.dart';
 import 'package:wantsbro/custom_widgets/product_grid_view.dart';
 import 'package:wantsbro/providers/category_provider.dart';
 import 'package:wantsbro/providers/product_provider.dart';
@@ -38,9 +39,7 @@ class _ProductWithCategoryState extends State<ProductWithCategory> {
             );
           } else {
             if (!snapshot.hasData) {
-              return Center(
-                child: CircularProgressIndicator(),
-              );
+              return Loading();
             } else {
               final dataList = snapshot.data.docs;
 
@@ -50,7 +49,8 @@ class _ProductWithCategoryState extends State<ProductWithCategory> {
                   child: Scaffold(
                       appBar: TabBar(
                         isScrollable: true,
-                        labelPadding: EdgeInsets.all(16),
+                        labelPadding:
+                            EdgeInsets.symmetric(horizontal: 16, vertical: 8),
                         indicatorColor: mainColor,
                         labelColor: white,
                         tabs: dataList
@@ -100,9 +100,7 @@ class ProductTabBarView extends StatelessWidget {
                   );
                 } else {
                   if (!snapshot.hasData) {
-                    return Center(
-                      child: CircularProgressIndicator(),
-                    );
+                    return Loading();
                   } else {
                     final productDataList = snapshot.data.docs;
                     productDataList.shuffle();

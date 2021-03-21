@@ -11,7 +11,6 @@ import 'package:wantsbro/pages/cart_page.dart';
 import 'package:wantsbro/pages/landing_page.dart';
 import 'package:wantsbro/pages/search_page.dart';
 import 'package:wantsbro/providers/cart_provider.dart';
-import 'package:wantsbro/providers/product_provider.dart';
 import 'package:wantsbro/providers/tabBar_nav_provider.dart';
 import 'package:wantsbro/theming/color_constants.dart';
 
